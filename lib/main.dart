@@ -1,20 +1,18 @@
-import 'package:flutter/material.dart';
+import 'services/car_service.dart'; // Importamos el servicio CarService
+import 'models/car_model.dart';
+void main() async {
+  CarService carService = CarService();
 
-void main() {
-  runApp(const MainApp());
-}
+  try {
+    // Obtener la lista de coches
+    List<Car> cars = await carService.getCars();
+    print("Número de coches obtenidos: ${cars.length}");
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
-    );
+    // Imprimir los detalles de cada coche
+    for (var car in cars) {
+      print("ID: ${car.id}, Año: ${car.year}, Marca: ${car.make}, Modelo: ${car.model}, Tipo: ${car.type}");
+    }
+  } catch (e) {
+    print("Error: $e");
   }
 }
