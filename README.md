@@ -2,3 +2,8 @@
 # empty
 
 A new Flutter project.
+
+
+  final String _serverUrl = "https://car-data.p.rapidapi.com";
+  final String _apiKey = "9d719da7bemsh56ce2dca37c54e6p1e60f0jsnd23970653948"; // Reemplaza con tu clave de API
+  final String _headerHost = "car-data.p.rapidapi.com";
