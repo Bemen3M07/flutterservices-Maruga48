@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-import 'services/car_service.dart';
+import 'package:provider/provider.dart';
+import 'providers/car_provider.dart';
 import 'models/car_model.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CarProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -26,41 +34,64 @@ class CarListScreen extends StatefulWidget {
 }
 
 class _CarListScreenState extends State<CarListScreen> {
-  late Future<List<CarsModel>> futureCars;
+  String searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    futureCars = CarHttpService().getCars();
+    Provider.of<CarProvider>(context, listen: false).fetchCars();
   }
 
   @override
   Widget build(BuildContext context) {
+    final carProvider = Provider.of<CarProvider>(context);
+    final filteredCars = carProvider.cars
+        .where((car) =>
+            car.make.toLowerCase().contains(searchQuery.toLowerCase()))
+        .toList();
+
     return Scaffold(
       appBar: AppBar(title: Text('Lista de Coches')),
-      body: FutureBuilder<List<CarsModel>>(
-        future: futureCars,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No hay coches disponibles.'));
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                final car = snapshot.data![index];
-                return ListTile(
-                  leading: Icon(Icons.directions_car, color: Colors.blue),
-                  title: Text('${car.make} ${car.model} (${car.year})'),
-                  subtitle: Text('Tipo: ${car.type}'),
-                );
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: 'Buscar por marca',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
               },
-            );
-          }
-        },
+            ),
+          ),
+          Expanded(
+            child: carProvider.isLoading
+                ? Center(child: CircularProgressIndicator())
+                : carProvider.errorMessage != null
+                    ? Center(child: Text(carProvider.errorMessage!))
+                    : ListView.builder(
+                        itemCount: filteredCars.length,
+                        itemBuilder: (context, index) {
+                          final car = filteredCars[index];
+                          return Card(
+                            margin: EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 10),
+                            child: ListTile(
+                              leading:
+                                  Icon(Icons.directions_car, color: Colors.blue),
+                              title: Text('${car.make} ${car.model} (${car.year})'),
+                              subtitle: Text('Tipo: ${car.type}'),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
